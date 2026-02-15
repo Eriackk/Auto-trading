@@ -40,8 +40,6 @@
             width: 60%;
             display: flex;
             flex-direction: column;
-            gap: 0;
-            position: relative;
         }
         
         .analysis-section {
@@ -52,45 +50,9 @@
             border-radius: 8px;
             overflow: hidden;
             flex: 1;
-            min-height: 200px;
         }
         
-        .resizer {
-            height: 8px;
-            background: #222;
-            cursor: ns-resize;
-            position: relative;
-            z-index: 10;
-            transition: background 0.2s;
-        }
-        
-        .resizer:hover {
-            background: #555;
-        }
-        
-        .resizer::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 40px;
-            height: 3px;
-            background: #444;
-            border-radius: 2px;
-        }
-        
-        .chat-section {
-            display: flex;
-            flex-direction: column;
-            background: #000;
-            border: 1px solid #444;
-            border-radius: 8px;
-            overflow: hidden;
-            flex: 1;
-            min-height: 200px;
-        }
-        
+
         .header {
             padding: 15px 20px;
             background: #252525;
@@ -179,12 +141,12 @@
         }
         
         .side-buy {
-            color: #fff;
+            color: #00ff88;
             font-weight: bold;
         }
         
         .side-sell {
-            color: #888;
+            color: #ff4444;
             font-weight: bold;
         }
         
@@ -217,72 +179,7 @@
             white-space: pre-wrap;
         }
         
-        .chat-messages {
-            flex: 1;
-            overflow-y: auto;
-            padding: 15px;
-            font-size: 13px;
-            line-height: 1.6;
-            background: #1a1a1a;
-        }
-        
-        .chat-message {
-            margin-bottom: 12px;
-            padding: 10px;
-            border-radius: 6px;
-        }
-        
-        .chat-message.user {
-            background: #2a2a2a;
-            margin-left: 20%;
-            color: #fff;
-        }
-        
-        .chat-message.ai {
-            background: #252525;
-            margin-right: 20%;
-            color: #ccc;
-        }
-        
-        .chat-input-area {
-            padding: 15px;
-            background: #252525;
-            border-top: 1px solid #333;
-            display: flex;
-            gap: 10px;
-        }
-        
-        .chat-input {
-            flex: 1;
-            padding: 10px;
-            background: #1a1a1a;
-            border: 1px solid #444;
-            border-radius: 4px;
-            color: #fff;
-            font-size: 13px;
-            font-family: inherit;
-        }
-        
-        .chat-input:focus {
-            outline: none;
-            border-color: #666;
-        }
-        
-        .chat-send-btn {
-            padding: 10px 20px;
-            background: #333;
-            color: #fff;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 13px;
-            font-weight: bold;
-        }
-        
-        .chat-send-btn:hover {
-            background: #444;
-        }
-        
+
         .download-btn {
             padding: 12px 20px;
             margin: 15px 20px;
@@ -358,28 +255,13 @@
         
         <!-- 右侧 (60%) -->
         <div class="right-panel">
-            <!-- 上：AI分析 -->
+            <!-- AI分析 -->
             <div class="analysis-section" id="analysis-section">
                 <div class="header">
                     <div class="title">AI 实时分析</div>
                     <div class="status" id="ai-status">等待数据...</div>
                 </div>
                 <div class="analysis-container" id="analysis-list"></div>
-            </div>
-            
-            <!-- 可拖动分隔条 -->
-            <div class="resizer" id="resizer"></div>
-            
-            <!-- 下：对话框 -->
-            <div class="chat-section" id="chat-section">
-                <div class="header">
-                    <div class="title">与 AI 对话</div>
-                </div>
-                <div class="chat-messages" id="chat-messages"></div>
-                <div class="chat-input-area">
-                    <input type="text" class="chat-input" id="chat-input" placeholder="输入问题..." onkeypress="handleChatKeypress(event)">
-                    <button class="chat-send-btn" onclick="sendChatMessage()">发送</button>
-                </div>
             </div>
         </div>
     </div>
@@ -398,47 +280,6 @@
         let ws = null;
         let analysisInterval = null;
         let autoScroll = true;
-        
-        // ===== 拖动调整大小 =====
-        let isResizing = false;
-        let startY = 0;
-        let startHeightAnalysis = 0;
-        let startHeightChat = 0;
-        
-        function initResizer() {
-            const resizer = document.getElementById('resizer');
-            const analysisSection = document.getElementById('analysis-section');
-            const chatSection = document.getElementById('chat-section');
-            
-            resizer.addEventListener('mousedown', (e) => {
-                isResizing = true;
-                startY = e.clientY;
-                startHeightAnalysis = analysisSection.offsetHeight;
-                startHeightChat = chatSection.offsetHeight;
-                document.body.style.cursor = 'ns-resize';
-                e.preventDefault();
-            });
-            
-            document.addEventListener('mousemove', (e) => {
-                if (!isResizing) return;
-                
-                const deltaY = e.clientY - startY;
-                const newHeightAnalysis = startHeightAnalysis + deltaY;
-                const newHeightChat = startHeightChat - deltaY;
-                
-                if (newHeightAnalysis > 200 && newHeightChat > 200) {
-                    analysisSection.style.flex = `0 0 ${newHeightAnalysis}px`;
-                    chatSection.style.flex = `0 0 ${newHeightChat}px`;
-                }
-            });
-            
-            document.addEventListener('mouseup', () => {
-                if (isResizing) {
-                    isResizing = false;
-                    document.body.style.cursor = 'default';
-                }
-            });
-        }
         
         // ===== 时间格式化 =====
         function formatTime(tsMs) {
@@ -614,14 +455,26 @@
                     body: JSON.stringify({
                         contents: [{
                             parts: [{
-                                text: `你是加密货币交易分析师。以下是过去5秒的${INST_ID}交易数据：
+                                text: `你是一名专业的加密货币交易分析师。
+
+我正在监控 ${INST_ID} 交易对的实时市场数据。${INST_ID} 是比特币(BTC)对美元稳定币(USDT)的交易对，价格单位为USDT。
+
+以下是过去20秒内的真实交易统计数据：
 
 ${summary}
 
-请简短分析（100字内）：
-1. 买卖压力对比
-2. 价格趋势方向
-3. 是否有异常大单`
+数据说明：
+- 交易笔数：过去20秒发生的成交次数
+- 买单：主动买入的交易（买方吃单），数量越多表示买入意愿强
+- 卖单：主动卖出的交易（卖方吃单），数量越多表示卖出压力大
+- 币：指BTC的数量
+- 价格范围：20秒内的最低价和最高价
+- 平均价格：20秒内的成交均价
+
+请基于这些真实交易数据，用简洁专业的语言分析（不超过120字）：
+1. 买卖压力对比情况
+2. 短期价格趋势判断
+3. 是否有异常大额交易`
                             }]
                         }],
                         generationConfig: {
@@ -701,68 +554,6 @@ ${summary}
             container.insertBefore(item, container.firstChild);
         }
         
-        // ===== 对话功能 =====
-        function handleChatKeypress(event) {
-            if (event.key === 'Enter') {
-                sendChatMessage();
-            }
-        }
-        
-        async function sendChatMessage() {
-            const input = document.getElementById('chat-input');
-            const message = input.value.trim();
-            
-            if (!message) return;
-            
-            displayChatMessage(message, 'user');
-            input.value = '';
-            
-            const recentContext = allTrades.slice(-20).map(t => 
-                `${t.time} | ${t.side} | ${t.px} USDT | ${t.sz} 币`
-            ).join('\n');
-            
-            try {
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`;
-                
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{
-                            parts: [{
-                                text: `你是加密货币交易助手。这是${INST_ID}的最近20笔交易：
-
-${recentContext}
-
-用户问题：${message}
-
-请简洁回答（150字内）。`
-                            }]
-                        }]
-                    })
-                });
-                
-                const data = await response.json();
-                const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || '回复失败';
-                
-                displayChatMessage(reply, 'ai');
-                
-            } catch (err) {
-                console.error('对话错误:', err);
-                displayChatMessage('抱歉，发生错误：' + err.message, 'ai');
-            }
-        }
-        
-        function displayChatMessage(text, sender) {
-            const container = document.getElementById('chat-messages');
-            const msg = document.createElement('div');
-            msg.className = `chat-message ${sender}`;
-            msg.textContent = text;
-            
-            container.appendChild(msg);
-            container.scrollTop = container.scrollHeight;
-        }
-        
         // ===== 下载 CSV =====
         function downloadCSV() {
             if (allTrades.length === 0) {
@@ -793,9 +584,8 @@ ${recentContext}
         window.onload = () => {
             connectOKX();
             setupScrollListener();
-            initResizer();
             
-            analysisInterval = setInterval(analyzeWithGemini, 5000);
+            analysisInterval = setInterval(analyzeWithGemini, 20000); // 20秒分析一次
         };
         
         // ===== 清理 =====
