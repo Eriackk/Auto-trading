@@ -40,27 +40,55 @@
             width: 60%;
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 0;
+            position: relative;
         }
         
         .analysis-section {
-            height: 70%;
             display: flex;
             flex-direction: column;
-            background: #1a1a1a;
-            border: 1px solid #333;
+            background: #000;
+            border: 1px solid #444;
             border-radius: 8px;
             overflow: hidden;
+            flex: 1;
+            min-height: 200px;
+        }
+        
+        .resizer {
+            height: 8px;
+            background: #222;
+            cursor: ns-resize;
+            position: relative;
+            z-index: 10;
+            transition: background 0.2s;
+        }
+        
+        .resizer:hover {
+            background: #00ff88;
+        }
+        
+        .resizer::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 40px;
+            height: 3px;
+            background: #444;
+            border-radius: 2px;
         }
         
         .chat-section {
-            height: 30%;
             display: flex;
             flex-direction: column;
-            background: #1a1a1a;
-            border: 1px solid #333;
+            background: #000;
+            border: 1px solid #444;
             border-radius: 8px;
             overflow: hidden;
+            flex: 1;
+            min-height: 200px;
         }
         
         .header {
@@ -81,15 +109,15 @@
         .title {
             font-size: 16px;
             font-weight: bold;
-            color: #fff;
+            color: #00ff88;
         }
         
         .pair-selector {
             padding: 5px 10px;
             background: #1a1a1a;
-            border: 1px solid #555;
+            border: 1px solid #00ff88;
             border-radius: 4px;
-            color: #ccc;
+            color: #00ff88;
             font-size: 13px;
             font-family: inherit;
             cursor: pointer;
@@ -97,7 +125,8 @@
         
         .pair-selector:focus {
             outline: none;
-            border-color: #777;
+            border-color: #00ff88;
+            box-shadow: 0 0 5px rgba(0, 255, 136, 0.5);
         }
         
         .status {
@@ -106,7 +135,7 @@
         }
         
         .status.connected {
-            color: #0f0;
+            color: #00ff88;
         }
         
         .table-header {
@@ -117,7 +146,12 @@
             border-bottom: 2px solid #444;
             font-weight: bold;
             font-size: 13px;
-            color: #fff;
+            color: #00ff88;
+            text-align: right;
+        }
+        
+        .table-header > div:first-child {
+            text-align: left;
         }
         
         .trades-container {
@@ -134,6 +168,11 @@
             border-bottom: 1px solid #222;
             line-height: 1.8;
             color: #aaa;
+            text-align: right;
+        }
+        
+        .trade-row > div:first-child {
+            text-align: left;
         }
         
         .trade-row:hover {
@@ -141,12 +180,12 @@
         }
         
         .side-buy {
-            color: #0f0;
+            color: #00ff88;
             font-weight: bold;
         }
         
         .side-sell {
-            color: #f44;
+            color: #ff4444;
             font-weight: bold;
         }
         
@@ -156,14 +195,15 @@
             padding: 15px;
             font-size: 13px;
             line-height: 1.8;
-            color: #aaa;
+            color: #000;
+            background: #fff;
         }
         
         .analysis-item {
             margin-bottom: 20px;
             padding: 15px;
-            background: #252525;
-            border-left: 3px solid #555;
+            background: #f5f5f5;
+            border-left: 3px solid #00ff88;
             border-radius: 4px;
         }
         
@@ -174,7 +214,7 @@
         }
         
         .analysis-content {
-            color: #ccc;
+            color: #000;
             white-space: pre-wrap;
         }
         
@@ -184,6 +224,7 @@
             padding: 15px;
             font-size: 13px;
             line-height: 1.6;
+            background: #fff;
         }
         
         .chat-message {
@@ -193,21 +234,21 @@
         }
         
         .chat-message.user {
-            background: #2a2a2a;
+            background: #e8f5e9;
             margin-left: 20%;
-            color: #ccc;
+            color: #000;
         }
         
         .chat-message.ai {
-            background: #1f1f1f;
+            background: #f5f5f5;
             margin-right: 20%;
-            color: #aaa;
+            color: #000;
         }
         
         .chat-input-area {
             padding: 15px;
-            background: #252525;
-            border-top: 1px solid #333;
+            background: #f5f5f5;
+            border-top: 1px solid #ddd;
             display: flex;
             gap: 10px;
         }
@@ -215,23 +256,23 @@
         .chat-input {
             flex: 1;
             padding: 10px;
-            background: #1a1a1a;
-            border: 1px solid #444;
+            background: #fff;
+            border: 1px solid #ccc;
             border-radius: 4px;
-            color: #ccc;
+            color: #000;
             font-size: 13px;
             font-family: inherit;
         }
         
         .chat-input:focus {
             outline: none;
-            border-color: #666;
+            border-color: #00ff88;
         }
         
         .chat-send-btn {
             padding: 10px 20px;
-            background: #333;
-            color: #fff;
+            background: #00ff88;
+            color: #000;
             border: none;
             border-radius: 4px;
             cursor: pointer;
@@ -240,14 +281,14 @@
         }
         
         .chat-send-btn:hover {
-            background: #444;
+            background: #00dd77;
         }
         
         .download-btn {
             padding: 12px 20px;
             margin: 15px 20px;
-            background: #333;
-            color: #fff;
+            background: #00ff88;
+            color: #000;
             border: none;
             border-radius: 4px;
             cursor: pointer;
@@ -256,7 +297,7 @@
         }
         
         .download-btn:hover {
-            background: #444;
+            background: #00dd77;
         }
         
         .stats {
@@ -318,8 +359,8 @@
         
         <!-- 右侧 (60%) -->
         <div class="right-panel">
-            <!-- 上：AI分析 (70%) -->
-            <div class="analysis-section">
+            <!-- 上：AI分析 -->
+            <div class="analysis-section" id="analysis-section">
                 <div class="header">
                     <div class="title">AI 实时分析</div>
                     <div class="status" id="ai-status">等待数据...</div>
@@ -327,8 +368,11 @@
                 <div class="analysis-container" id="analysis-list"></div>
             </div>
             
-            <!-- 下：对话框 (30%) -->
-            <div class="chat-section">
+            <!-- 可拖动分隔条 -->
+            <div class="resizer" id="resizer"></div>
+            
+            <!-- 下：对话框 -->
+            <div class="chat-section" id="chat-section">
                 <div class="header">
                     <div class="title">与 AI 对话</div>
                 </div>
@@ -354,7 +398,48 @@
         let seenIds = new Set();
         let ws = null;
         let analysisInterval = null;
-        let autoScroll = true; // 自动滚动标志
+        let autoScroll = true;
+        
+        // ===== 拖动调整大小 =====
+        let isResizing = false;
+        let startY = 0;
+        let startHeightAnalysis = 0;
+        let startHeightChat = 0;
+        
+        function initResizer() {
+            const resizer = document.getElementById('resizer');
+            const analysisSection = document.getElementById('analysis-section');
+            const chatSection = document.getElementById('chat-section');
+            
+            resizer.addEventListener('mousedown', (e) => {
+                isResizing = true;
+                startY = e.clientY;
+                startHeightAnalysis = analysisSection.offsetHeight;
+                startHeightChat = chatSection.offsetHeight;
+                document.body.style.cursor = 'ns-resize';
+                e.preventDefault();
+            });
+            
+            document.addEventListener('mousemove', (e) => {
+                if (!isResizing) return;
+                
+                const deltaY = e.clientY - startY;
+                const newHeightAnalysis = startHeightAnalysis + deltaY;
+                const newHeightChat = startHeightChat - deltaY;
+                
+                if (newHeightAnalysis > 200 && newHeightChat > 200) {
+                    analysisSection.style.flex = `0 0 ${newHeightAnalysis}px`;
+                    chatSection.style.flex = `0 0 ${newHeightChat}px`;
+                }
+            });
+            
+            document.addEventListener('mouseup', () => {
+                if (isResizing) {
+                    isResizing = false;
+                    document.body.style.cursor = 'default';
+                }
+            });
+        }
         
         // ===== 时间格式化 =====
         function formatTime(tsMs) {
@@ -408,7 +493,6 @@
                 document.getElementById('ws-status').textContent = '已连接';
                 document.getElementById('ws-status').classList.add('connected');
                 
-                // 订阅交易频道
                 const subMsg = {
                     op: 'subscribe',
                     args: [{ channel: 'trades', instId: INST_ID }]
@@ -420,13 +504,11 @@
                 try {
                     const data = JSON.parse(event.data);
                     
-                    // 处理订阅确认
                     if (data.event) {
                         console.log('事件:', data.event, data.msg || '');
                         return;
                     }
                     
-                    // 处理交易数据
                     if (data.data && Array.isArray(data.data)) {
                         data.data.forEach(trade => {
                             processTrade(trade);
@@ -455,11 +537,9 @@
         function processTrade(trade) {
             const tradeId = trade.tradeId;
             
-            // 去重
             if (seenIds.has(tradeId)) return;
             seenIds.add(tradeId);
             
-            // 限制内存
             if (seenIds.size > 200000) {
                 seenIds.clear();
             }
@@ -480,20 +560,14 @@
                 ts: ts
             };
             
-            // 保存到所有交易
             allTrades.push(tradeData);
-            
-            // 保存到最近5秒交易（用于AI分析）
             recentTrades.push(tradeData);
             
-            // 显示在页面
             displayTrade(tradeData);
-            
-            // 更新统计
             updateStats();
         }
         
-        // ===== 显示交易（智能滚动）=====
+        // ===== 显示交易 =====
         function displayTrade(trade) {
             const container = document.getElementById('trades-list');
             const row = document.createElement('div');
@@ -510,7 +584,6 @@
             
             container.appendChild(row);
             
-            // 只有当用户在底部时才自动滚动
             if (autoScroll) {
                 container.scrollTop = container.scrollHeight;
             }
@@ -529,12 +602,10 @@
             
             document.getElementById('ai-status').textContent = '分析中...';
             
-            // 准备数据摘要
             const summary = prepareSummary(recentTrades);
             
-            // 调用 Gemini API
             try {
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`;
                 
                 const response = await fetch(url, {
                     method: 'POST',
@@ -568,8 +639,6 @@ ${summary}
                 }
                 
                 const data = await response.json();
-                console.log('API响应:', data);
-                
                 const analysis = data.candidates?.[0]?.content?.parts?.[0]?.text || '分析数据为空';
                 
                 displayAnalysis(analysis);
@@ -581,7 +650,6 @@ ${summary}
                 document.getElementById('ai-status').textContent = '分析失败';
             }
             
-            // 清空最近交易
             recentTrades = [];
         }
         
@@ -647,18 +715,15 @@ ${summary}
             
             if (!message) return;
             
-            // 显示用户消息
             displayChatMessage(message, 'user');
             input.value = '';
             
-            // 准备上下文（最近的交易数据）
             const recentContext = allTrades.slice(-20).map(t => 
                 `${t.time} | ${t.side} | ${t.px} USDT | ${t.sz} 币`
             ).join('\n');
             
-            // 调用AI
             try {
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`;
                 
                 const response = await fetch(url, {
                     method: 'POST',
@@ -729,8 +794,8 @@ ${recentContext}
         window.onload = () => {
             connectOKX();
             setupScrollListener();
+            initResizer();
             
-            // 每5秒AI分析一次
             analysisInterval = setInterval(analyzeWithGemini, 5000);
         };
         
