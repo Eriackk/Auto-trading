@@ -121,8 +121,8 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>Gemini API 测试</h1>
-            <p style="margin-top: 10px; font-size: 14px; opacity: 0.8;">测试 Google Gemini API 连接</p>
+            <h1>Groq API 测试</h1>
+            <p style="margin-top: 10px; font-size: 14px; opacity: 0.8;">测试 Groq API 连接 (超快速AI)</p>
         </div>
         
         <div class="messages" id="messages">
@@ -143,14 +143,14 @@
     </div>
 
     <script>
-        const API_KEY = 'AIzaSyBkwTqPVykDZWm6CrQKDi7uxgCFaNNqGpk';
+        const API_KEY = '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';
         
-        // 要测试的模型列表
+        // Groq API 支持的模型
         const MODELS = [
-            'gemini-pro',
-            'gemini-1.5-flash',
-            'gemini-1.5-flash-latest',
-            'gemini-1.5-pro-latest'
+            'llama-3.3-70b-versatile',
+            'llama-3.1-70b-versatile',
+            'mixtral-8x7b-32768',
+            'gemma2-9b-it'
         ];
         
         let currentModelIndex = 0;
@@ -189,25 +189,30 @@
             
             // 尝试所有模型
             for (let i = 0; i < MODELS.length; i++) {
-                const modelName = MODELS[i];
-                addDebug(`尝试模型 ${i + 1}/${MODELS.length}: ${modelName}`);
+                const model = MODELS[i];
+                addDebug(`尝试模型 ${i + 1}/${MODELS.length}: ${model}`);
                 
                 try {
-                    const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${API_KEY}`;
+                    const url = 'https://api.groq.com/openai/v1/chat/completions';
                     
-                    addDebug(`请求URL: ${url.substring(0, 100)}...`);
+                    addDebug(`请求URL: ${url}`);
                     
                     const response = await fetch(url, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${API_KEY}`
                         },
                         body: JSON.stringify({
-                            contents: [{
-                                parts: [{
-                                    text: message
-                                }]
-                            }]
+                            model: model,
+                            messages: [
+                                {
+                                    role: 'user',
+                                    content: message
+                                }
+                            ],
+                            temperature: 0.7,
+                            max_tokens: 1024
                         })
                     });
                     
@@ -215,15 +220,15 @@
                     
                     if (!response.ok) {
                         const errorText = await response.text();
-                        addDebug(`错误响应: ${errorText.substring(0, 200)}`);
+                        addDebug(`错误响应: ${errorText.substring(0, 300)}`);
                         continue; // 尝试下一个模型
                     }
                     
                     const data = await response.json();
-                    addDebug(`成功! 使用模型: ${modelName}`);
+                    addDebug(`✓ 成功! 使用模型: ${model}`);
                     addDebug(`响应数据: ${JSON.stringify(data).substring(0, 200)}...`);
                     
-                    const reply = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                    const reply = data.choices?.[0]?.message?.content;
                     
                     if (reply) {
                         addMessage(reply, 'ai');
@@ -235,8 +240,8 @@
                     }
                     
                 } catch (error) {
-                    addDebug(`模型 ${modelName} 异常: ${error.message}`);
-                    console.error(`模型 ${modelName} 错误:`, error);
+                    addDebug(`异常: ${error.message}`);
+                    console.error(`错误:`, error);
                 }
             }
             
