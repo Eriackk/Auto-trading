@@ -667,8 +667,16 @@ canvas.addEventListener('mousemove',e=>{
   }
   const pt=vis[best]; if(!pt){tip.style.display='none';return;}
 
-  const tol=tSpan*0.03;
-  const near=trades.filter(tr=>tr.ts>=t0&&tr.ts<=t1&&Math.abs(tr.ts-hovTs)<tol);
+  // 像素距离判断：把每个交易点的时间戳换算成X坐标，判断与鼠标X的像素距离
+  const PIX_TOL = 18; // 像素容差，±18px内的点都显示
+  const near = trades.filter(tr => {
+    if (tr.ts < t0 || tr.ts > t1) return false;
+    const trX = pL + ((tr.ts - t0) / tSpan) * cW;
+    return Math.abs(trX - mx) <= PIX_TOL;
+  });
+
+  // 按时间戳排序，买卖都显示
+  near.sort((a,b) => a.ts - b.ts);
 
   const d=new Date(pt.ts);
   const ts=d.getHours().toString().padStart(2,'0')+':'+
@@ -676,13 +684,26 @@ canvas.addEventListener('mousemove',e=>{
             d.getSeconds().toString().padStart(2,'0')+'.'+
             d.getMilliseconds().toString().padStart(3,'0');
 
-  let html=`<div class="tip-t">${ts}</div><div class="tip-px">${fmtPx(pt.px)} USDT</div>`;
+  // 统计买卖汇总
+  const buyN  = near.filter(t=>t.side==='buy').length;
+  const sellN = near.filter(t=>t.side==='sell').length;
+  const summaryParts = [];
+  if(buyN)  summaryParts.push(`<span style="color:var(--buy)">${buyN}买</span>`);
+  if(sellN) summaryParts.push(`<span style="color:var(--sell)">${sellN}卖</span>`);
+
+  let html=`<div class="tip-t">${ts}${summaryParts.length?' · '+summaryParts.join(' '):''}</div>`;
+  html+=`<div class="tip-px">${fmtPx(pt.px)} USDT</div>`;
   if(near.length){
     html+='<div style="height:3px"></div>';
-    near.slice(0,5).forEach(tr=>{
+    near.slice(0,20).forEach(tr=>{
       const cls=tr.side==='buy'?'tip-b':'tip-s';
-      html+=`<div class="${cls}">${tr.side==='buy'?'买入':'卖出'} ${tr.sz.toFixed(4)} · ${fmtUSD(tr.usd)} U</div>`;
+      const label=tr.side==='buy'?'买入':'卖出';
+      const szStr=tr.sz>=1?tr.sz.toFixed(3):tr.sz.toFixed(4);
+      html+=`<div class="${cls}">${label} ${szStr} · ${fmtUSD(tr.usd)} U</div>`;
     });
+    if(near.length>20){
+      html+=`<div style="color:var(--text3);font-size:8px">...还有 ${near.length-20} 笔</div>`;
+    }
   }
   tip.innerHTML=html; tip.style.display='block';
   tip.style.left=(e.clientX+16)+'px'; tip.style.top=(e.clientY-12)+'px';
