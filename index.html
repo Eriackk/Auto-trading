@@ -160,7 +160,7 @@ canvas#chart { position:absolute; inset:0; width:100%; height:100%; cursor:cross
 
 /* col header */
 .col-hdr {
-  display:grid; grid-template-columns:90px 62px 68px 44px;
+  display:grid; grid-template-columns:60px 80px 68px 44px;
   padding:4px 12px; font-size:8px; font-weight:500; color:var(--text3);
   letter-spacing:0.1em; border-bottom:1px solid var(--goldborder);
   background:var(--bg3); flex-shrink:0;
@@ -176,10 +176,10 @@ canvas#chart { position:absolute; inset:0; width:100%; height:100%; cursor:cross
 .trades-list::-webkit-scrollbar-thumb { background:var(--goldborder2); border-radius:2px; }
 
 .tr-row {
-  display:grid; grid-template-columns:90px 62px 68px 44px;
+  display:grid; grid-template-columns:60px 80px 68px 44px;
   padding:4px 12px; border-bottom:1px solid rgba(138,106,42,0.07);
   font-size:11px; position:relative; transition:background 0.3s;
-  animation:fadein 0.15s ease; cursor:default;
+  animation:fadein 0.15s ease; cursor:pointer;
 }
 .tr-row.jump-hl {
   background: rgba(138,106,42,0.18) !important;
@@ -270,10 +270,11 @@ canvas#chart { position:absolute; inset:0; width:100%; height:100%; cursor:cross
       <input class="filter-input" id="threshInput" type="number" placeholder="金额" min="0">
       <div class="filter-unit">USDT</div>
       <div class="zbtn" id="btnLabel" title="显示/隐藏点旁金额" style="width:auto;padding:0 8px;font-size:9px;letter-spacing:0.04em;flex-shrink:0">金额</div>
+      <div class="zbtn" id="btnDownload" title="下载CSV" style="width:auto;padding:0 8px;font-size:9px;flex-shrink:0">↓CSV</div>
     </div>
     <div class="col-hdr">
-      <div>价格(USDT)</div>
-      <div style="text-align:right">数量</div>
+      <div>时间</div>
+      <div>价格(U)</div>
       <div style="text-align:right">金额(U)</div>
       <div style="text-align:right">方向</div>
     </div>
@@ -286,7 +287,6 @@ canvas#chart { position:absolute; inset:0; width:100%; height:100%; cursor:cross
 <script>
 let PAIR = 'BTC-USDT';
 const WS_URL  = 'wss://ws.okx.com:8443/ws/v5/public';
-const MAX_SHOW = 300;
 let VIEW_COUNT = 300;
 const VIEW_MIN = 60, VIEW_MAX = 5000;
 
@@ -383,6 +383,13 @@ function fmtUSD(u){
 function updateStats(px){}
 
 // ── TRADE LIST ──
+function fmtTime(ts){
+  const d=new Date(ts);
+  return d.getHours().toString().padStart(2,'0')+':'+
+         d.getMinutes().toString().padStart(2,'0')+':'+
+         d.getSeconds().toString().padStart(2,'0');
+}
+
 function makeRow(t){
   const isBig=bigThresh>0&&t.usd>=bigThresh;
   const row=document.createElement('div');
@@ -391,26 +398,51 @@ function makeRow(t){
   const barPct=maxUsdSeen>0?(t.usd/maxUsdSeen*100):0;
   const barCol=t.side==='buy'?'#2a7a5a':'#a03838';
   const bigMark=isBig?' ◆':'';
-  const szStr=t.sz>=1?t.sz.toFixed(3):t.sz.toFixed(5);
   row.innerHTML=`
     <div class="sz-bar" style="width:${barPct}%;background:${barCol}"></div>
+    <div class="td-px" style="color:var(--text3);font-size:10px">${fmtTime(t.ts)}</div>
     <div class="td-px">${fmtPx(t.px)}</div>
-    <div class="td-sz">${szStr}</div>
     <div class="td-usd">${fmtUSD(t.usd)}${bigMark}</div>
     <div class="td-side ${t.side}">${t.side==='buy'?'买':'卖'}</div>
   `;
+  // 点击跳转到图表对应位置并高亮
+  row.addEventListener('click',()=>jumpToTs(t.ts));
   return row;
 }
+
 function prependRow(t){
   const list=document.getElementById('trList');
-  if(list.children.length>=MAX_SHOW) list.removeChild(list.lastChild);
+  // 无上限，直接插入顶部
   list.insertBefore(makeRow(t),list.firstChild);
 }
+
 function rebuildList(){
   const list=document.getElementById('trList');
   list.innerHTML='';
-  trades.slice(-MAX_SHOW).reverse().forEach(t=>list.appendChild(makeRow(t)));
+  trades.slice().reverse().forEach(t=>list.appendChild(makeRow(t)));
 }
+
+// ── 下载CSV ──
+document.getElementById('btnDownload').addEventListener('click',()=>{
+  if(!trades.length){alert('暂无数据');return;}
+  const lines=['time,px,sz,usd,side'];
+  trades.forEach(t=>{
+    const d=new Date(t.ts);
+    const timeStr=d.getFullYear()+'-'+
+      String(d.getMonth()+1).padStart(2,'0')+'-'+
+      String(d.getDate()).padStart(2,'0')+' '+
+      String(d.getHours()).padStart(2,'0')+':'+
+      String(d.getMinutes()).padStart(2,'0')+':'+
+      String(d.getSeconds()).padStart(2,'0')+'.'+
+      String(d.getMilliseconds()).padStart(3,'0');
+    lines.push(`${timeStr},${t.px},${t.sz},${t.usd.toFixed(2)},${t.side}`);
+  });
+  const blob=new Blob([lines.join('\n')],{type:'text/csv;charset=utf-8;'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`coinshot_${PAIR}_${Date.now()}.csv`;
+  a.click();
+});
 document.getElementById('threshInput').addEventListener('input',e=>{
   bigThresh=parseFloat(e.target.value)||0;
   draw(); rebuildList();
@@ -613,6 +645,16 @@ function draw(){
       ctx.textAlign='left';
       ctx.fillText(labelStr, lx, ly);
     }
+
+    // ── 高亮点（点击明细跳转时）──
+    if(highlightTs!==null && Math.abs(tr.ts-highlightTs)<50){
+      ctx.beginPath(); ctx.arc(x,y,r+8,0,Math.PI*2);
+      ctx.strokeStyle='rgba(138,106,42,0.7)';
+      ctx.lineWidth=2; ctx.stroke();
+      ctx.beginPath(); ctx.arc(x,y,r+13,0,Math.PI*2);
+      ctx.strokeStyle='rgba(138,106,42,0.25)';
+      ctx.lineWidth=1.5; ctx.stroke();
+    }
   });
 
   // ── 当前价格 badge ──
@@ -762,7 +804,34 @@ canvas.addEventListener('click',e=>{
   jumpToTrade(targetTs);
 });
 
-// 跳转并高亮列表行
+// ── 点击明细跳转图表 ──
+let highlightTs = null; // 当前高亮的时间戳
+
+function jumpToTs(ts){
+  // 找到该时间戳在prices里的位置
+  let idx=-1, bestD=Infinity;
+  for(let i=0;i<prices.length;i++){
+    const d=Math.abs(prices[i].ts-ts);
+    if(d<bestD){bestD=d;idx=i;}
+  }
+  if(idx<0)return;
+
+  // 调整scrollPct使目标点出现在视窗中央
+  const vc=Math.min(prices.length,VIEW_COUNT);
+  const half=Math.floor(vc/2);
+  const idealStart=Math.max(0,idx-half);
+  const maxStart=Math.max(0,prices.length-vc);
+  scrollPct=maxStart>0?Math.min(1,idealStart/maxStart):1;
+  liveMode=scrollPct>=0.99;
+
+  highlightTs=ts;
+  updateSB(); draw();
+
+  // 1.8秒后取消高亮
+  setTimeout(()=>{ highlightTs=null; draw(); },1800);
+}
+
+// 跳转并高亮列表行（图表点击时用）
 function jumpToTrade(targetTs){
   const list=document.getElementById('trList');
   const rows=list.querySelectorAll('.tr-row');
