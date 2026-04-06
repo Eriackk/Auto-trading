@@ -593,35 +593,23 @@ function draw(){
       ctx.fillStyle='rgba(249,246,240,0.5)'; ctx.fill();
     }
 
-    // ── 金额标签 ──
-    if(showLabel){
-      // 大单：醒目标签；普通点：字更小更淡
+    // ── 金额标签（只对大单显示）──
+    if(showLabel && isBig){
       const labelStr='$'+fmtUSD(tr.usd);
-      const fontSize= isBig ? 9 : 7;
-      ctx.font=fontSize+'px IBM Plex Mono';
+      ctx.font='9px IBM Plex Mono';
       const lw=ctx.measureText(labelStr).width;
       const lx=x+r+3;
       const ly=y-r-2;
       const pad=2;
-
-      if(isBig){
-        // 背景pill
-        ctx.fillStyle= tr.side==='buy'
-          ? 'rgba(42,122,90,0.13)'
-          : 'rgba(160,56,56,0.13)';
-        ctx.beginPath();
-        ctx.roundRect(lx-pad, ly-fontSize, lw+pad*2, fontSize+3, 2);
-        ctx.fill();
-        // 文字
-        ctx.fillStyle= tr.side==='buy'
-          ? 'rgba(30,100,70,0.90)'
-          : 'rgba(140,50,50,0.90)';
-      } else {
-        // 普通点：淡色无背景
-        ctx.fillStyle= tr.side==='buy'
-          ? 'rgba(42,122,90,0.40)'
-          : 'rgba(160,56,56,0.40)';
-      }
+      ctx.fillStyle= tr.side==='buy'
+        ? 'rgba(42,122,90,0.13)'
+        : 'rgba(160,56,56,0.13)';
+      ctx.beginPath();
+      ctx.roundRect(lx-pad, ly-9, lw+pad*2, 11, 2);
+      ctx.fill();
+      ctx.fillStyle= tr.side==='buy'
+        ? 'rgba(30,100,70,0.90)'
+        : 'rgba(140,50,50,0.90)';
       ctx.textAlign='left';
       ctx.fillText(labelStr, lx, ly);
     }
