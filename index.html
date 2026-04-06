@@ -110,6 +110,11 @@ select option { background:var(--bg2); color:var(--gold); }
   font-family:'IBM Plex Mono',monospace;
 }
 .zbtn:hover { background:var(--bg4); border-color:var(--gold2); }
+.zbtn.active {
+  background: var(--gold2); color:#faf7f2;
+  border-color: var(--gold2);
+  box-shadow: 0 0 0 2px rgba(138,106,42,0.18);
+}
 
 .legend { display:flex; gap:14px; align-items:center; }
 .leg { display:flex; align-items:center; gap:5px; font-size:9px; color:var(--text3); }
@@ -137,27 +142,6 @@ canvas#chart { position:absolute; inset:0; width:100%; height:100%; cursor:cross
   width:300px; display:flex; flex-direction:column;
   background:var(--panel); flex-shrink:0; overflow:hidden;
 }
-
-/* mini stats */
-.mini-stats {
-  display:grid; grid-template-columns:1fr 1fr;
-  border-bottom:1px solid var(--goldborder); flex-shrink:0;
-}
-.ms {
-  padding:8px 12px;
-  border-right:1px solid var(--goldborder);
-  border-bottom:1px solid var(--goldborder);
-  display:flex; flex-direction:column; gap:2px;
-  background:var(--bg2);
-}
-.ms:nth-child(2n){ border-right:none; }
-.ms:nth-last-child(-n+2){ border-bottom:none; }
-.ms-label { font-size:8px; color:var(--text3); letter-spacing:0.12em; }
-.ms-value { font-size:13px; font-weight:500; color:var(--gold); }
-.ms-value.buy  { color:var(--buy); }
-.ms-value.sell { color:var(--sell); }
-.ms-value.pos  { color:var(--buy); }
-.ms-value.neg  { color:var(--sell); }
 
 /* filter */
 .filter-row {
@@ -194,8 +178,14 @@ canvas#chart { position:absolute; inset:0; width:100%; height:100%; cursor:cross
 .tr-row {
   display:grid; grid-template-columns:90px 62px 68px 44px;
   padding:4px 12px; border-bottom:1px solid rgba(138,106,42,0.07);
-  font-size:11px; position:relative; transition:background 0.1s;
-  animation:fadein 0.15s ease;
+  font-size:11px; position:relative; transition:background 0.3s;
+  animation:fadein 0.15s ease; cursor:default;
+}
+.tr-row.jump-hl {
+  background: rgba(138,106,42,0.18) !important;
+  outline: 1.5px solid var(--goldborder2);
+  outline-offset: -1px;
+  transition: background 0s;
 }
 @keyframes fadein{from{opacity:0}to{opacity:1}}
 .tr-row:hover { background:var(--bg2); }
@@ -275,20 +265,11 @@ canvas#chart { position:absolute; inset:0; width:100%; height:100%; cursor:cross
   </div>
 
   <div class="right-panel">
-    <div class="mini-stats">
-      <div class="ms"><div class="ms-label">当前价格</div><div class="ms-value" id="s-price">—</div></div>
-      <div class="ms"><div class="ms-label">CVD</div><div class="ms-value" id="s-cvd">—</div></div>
-      <div class="ms"><div class="ms-label">买入量</div><div class="ms-value buy" id="s-buy">—</div></div>
-      <div class="ms"><div class="ms-label">卖出量</div><div class="ms-value sell" id="s-sell">—</div></div>
-      <div class="ms" style="grid-column:span 2;border-bottom:none;">
-        <div class="ms-label">买方占比</div>
-        <div class="ms-value" id="s-ratio">—</div>
-      </div>
-    </div>
     <div class="filter-row">
       <div class="filter-label">大单高亮 ≥</div>
       <input class="filter-input" id="threshInput" type="number" placeholder="金额" min="0">
       <div class="filter-unit">USDT</div>
+      <div class="zbtn" id="btnLabel" title="显示/隐藏点旁金额" style="width:auto;padding:0 8px;font-size:9px;letter-spacing:0.04em;flex-shrink:0">金额</div>
     </div>
     <div class="col-hdr">
       <div>价格(USDT)</div>
@@ -314,6 +295,7 @@ let prices=[], trades=[];
 let totalBuy=0, totalSell=0, cvd=0, cnt=0;
 let bigThresh=0, maxUsdSeen=0;
 let scrollPct=1.0, liveMode=true;
+let showLabel=false;  // 点旁金额显示开关
 
 // ── CANVAS ──
 const canvas=document.getElementById('chart');
@@ -397,26 +379,15 @@ function fmtUSD(u){
   return u.toFixed(0);
 }
 
-// ── STATS ──
-function updateStats(px){
-  if(px!==undefined) document.getElementById('s-price').textContent=fmtPx(px)+' U';
-  document.getElementById('s-buy').textContent=fmtVol(totalBuy);
-  document.getElementById('s-sell').textContent=fmtVol(totalSell);
-  const cvdEl=document.getElementById('s-cvd');
-  cvdEl.textContent=(cvd>=0?'+':'')+fmtVol(cvd);
-  cvdEl.className='ms-value '+(cvd>=0?'pos':'neg');
-  const tot=totalBuy+totalSell;
-  const r=tot>0?(totalBuy/tot*100):50;
-  const rEl=document.getElementById('s-ratio');
-  rEl.textContent=r.toFixed(1)+'%';
-  rEl.className='ms-value '+(r>=50?'pos':'neg');
-}
+// ── STATS（已移除面板，保留空函数避免调用报错）──
+function updateStats(px){}
 
 // ── TRADE LIST ──
 function makeRow(t){
   const isBig=bigThresh>0&&t.usd>=bigThresh;
   const row=document.createElement('div');
   row.className='tr-row'+(isBig?(t.side==='buy'?' big-buy':' big-sell'):'');
+  row.dataset.ts=t.ts;
   const barPct=maxUsdSeen>0?(t.usd/maxUsdSeen*100):0;
   const barCol=t.side==='buy'?'#2a7a5a':'#a03838';
   const bigMark=isBig?' ◆':'';
@@ -510,6 +481,11 @@ document.getElementById('zFit').addEventListener('click',()=>{
   VIEW_COUNT=prices.length||300;
   scrollPct=0.5; liveMode=false;
   updateSB(); draw();
+});
+document.getElementById('btnLabel').addEventListener('click',()=>{
+  showLabel=!showLabel;
+  document.getElementById('btnLabel').classList.toggle('active', showLabel);
+  draw();
 });
 
 // ── DRAW ──
@@ -616,6 +592,39 @@ function draw(){
       ctx.beginPath(); ctx.arc(x,y,r-2,0,Math.PI*2);
       ctx.fillStyle='rgba(249,246,240,0.5)'; ctx.fill();
     }
+
+    // ── 金额标签 ──
+    if(showLabel){
+      // 大单：醒目标签；普通点：字更小更淡
+      const labelStr='$'+fmtUSD(tr.usd);
+      const fontSize= isBig ? 9 : 7;
+      ctx.font=fontSize+'px IBM Plex Mono';
+      const lw=ctx.measureText(labelStr).width;
+      const lx=x+r+3;
+      const ly=y-r-2;
+      const pad=2;
+
+      if(isBig){
+        // 背景pill
+        ctx.fillStyle= tr.side==='buy'
+          ? 'rgba(42,122,90,0.13)'
+          : 'rgba(160,56,56,0.13)';
+        ctx.beginPath();
+        ctx.roundRect(lx-pad, ly-fontSize, lw+pad*2, fontSize+3, 2);
+        ctx.fill();
+        // 文字
+        ctx.fillStyle= tr.side==='buy'
+          ? 'rgba(30,100,70,0.90)'
+          : 'rgba(140,50,50,0.90)';
+      } else {
+        // 普通点：淡色无背景
+        ctx.fillStyle= tr.side==='buy'
+          ? 'rgba(42,122,90,0.40)'
+          : 'rgba(160,56,56,0.40)';
+      }
+      ctx.textAlign='left';
+      ctx.fillText(labelStr, lx, ly);
+    }
   });
 
   // ── 当前价格 badge ──
@@ -643,8 +652,22 @@ function draw(){
   ctx.fillText('共 '+prices.length+' · 显示 '+vis.length, W-pR-4, pT+13);
 }
 
+// ── 公用：从鼠标X计算附近成交 ──
+function getNearTrades(mx, t0, t1, tSpan, cW){
+  const pL=72;
+  const PIX_TOL=18;
+  const near=trades.filter(tr=>{
+    if(tr.ts<t0||tr.ts>t1)return false;
+    const trX=pL+((tr.ts-t0)/tSpan)*cW;
+    return Math.abs(trX-mx)<=PIX_TOL;
+  });
+  near.sort((a,b)=>a.ts-b.ts);
+  return near;
+}
+
 // ── TOOLTIP ──
 const tip=document.getElementById('tip');
+
 canvas.addEventListener('mousemove',e=>{
   if(sbDrag){tip.style.display='none';return;}
   const rect=canvas.getBoundingClientRect();
@@ -660,6 +683,7 @@ canvas.addEventListener('mousemove',e=>{
   const t0=vis[0].ts,t1=vis[vis.length-1].ts,tSpan=t1-t0||1;
   const hovTs=t0+((mx-pL)/cW)*tSpan;
 
+  // 最近价格点
   let best=-1,bestD=Infinity;
   for(let i=0;i<vis.length;i++){
     const d=Math.abs(vis[i].ts-hovTs);
@@ -667,48 +691,112 @@ canvas.addEventListener('mousemove',e=>{
   }
   const pt=vis[best]; if(!pt){tip.style.display='none';return;}
 
-  // 像素距离判断：把每个交易点的时间戳换算成X坐标，判断与鼠标X的像素距离
-  const PIX_TOL = 18; // 像素容差，±18px内的点都显示
-  const near = trades.filter(tr => {
-    if (tr.ts < t0 || tr.ts > t1) return false;
-    const trX = pL + ((tr.ts - t0) / tSpan) * cW;
-    return Math.abs(trX - mx) <= PIX_TOL;
-  });
-
-  // 按时间戳排序，买卖都显示
-  near.sort((a,b) => a.ts - b.ts);
+  const near=getNearTrades(mx,t0,t1,tSpan,cW);
 
   const d=new Date(pt.ts);
-  const ts=d.getHours().toString().padStart(2,'0')+':'+
-            d.getMinutes().toString().padStart(2,'0')+':'+
-            d.getSeconds().toString().padStart(2,'0')+'.'+
-            d.getMilliseconds().toString().padStart(3,'0');
+  const tsStr=d.getHours().toString().padStart(2,'0')+':'+
+              d.getMinutes().toString().padStart(2,'0')+':'+
+              d.getSeconds().toString().padStart(2,'0')+'.'+
+              d.getMilliseconds().toString().padStart(3,'0');
 
-  // 统计买卖汇总
-  const buyN  = near.filter(t=>t.side==='buy').length;
-  const sellN = near.filter(t=>t.side==='sell').length;
-  const summaryParts = [];
+  const buyN=near.filter(t=>t.side==='buy').length;
+  const sellN=near.filter(t=>t.side==='sell').length;
+  const summaryParts=[];
   if(buyN)  summaryParts.push(`<span style="color:var(--buy)">${buyN}买</span>`);
   if(sellN) summaryParts.push(`<span style="color:var(--sell)">${sellN}卖</span>`);
 
-  let html=`<div class="tip-t">${ts}${summaryParts.length?' · '+summaryParts.join(' '):''}</div>`;
+  let html=`<div class="tip-t">${tsStr}${summaryParts.length?' · '+summaryParts.join(' '):''}</div>`;
   html+=`<div class="tip-px">${fmtPx(pt.px)} USDT</div>`;
   if(near.length){
     html+='<div style="height:3px"></div>';
     near.slice(0,20).forEach(tr=>{
       const cls=tr.side==='buy'?'tip-b':'tip-s';
-      const label=tr.side==='buy'?'买入':'卖出';
       const szStr=tr.sz>=1?tr.sz.toFixed(3):tr.sz.toFixed(4);
-      html+=`<div class="${cls}">${label} ${szStr} · ${fmtUSD(tr.usd)} U</div>`;
+      html+=`<div class="${cls}">${tr.side==='buy'?'买入':'卖出'} ${szStr} · ${fmtUSD(tr.usd)} U</div>`;
     });
-    if(near.length>20){
-      html+=`<div style="color:var(--text3);font-size:8px">...还有 ${near.length-20} 笔</div>`;
-    }
+    if(near.length>20) html+=`<div style="color:var(--text3);font-size:8px">...还有 ${near.length-20} 笔</div>`;
+    html+=`<div style="margin-top:5px;font-size:8px;color:var(--text3);border-top:1px solid var(--goldborder);padding-top:4px">点击跳转到明细 →</div>`;
   }
-  tip.innerHTML=html; tip.style.display='block';
-  tip.style.left=(e.clientX+16)+'px'; tip.style.top=(e.clientY-12)+'px';
+
+  tip.innerHTML=html;
+  tip.style.display='block';
+
+  // ── 自适应方向：防止遮挡 ──
+  // 先渲染出来量一下高度
+  tip.style.visibility='hidden'; tip.style.display='block';
+  const tipH=tip.offsetHeight, tipW=tip.offsetWidth;
+  tip.style.visibility='visible';
+
+  const vpH=window.innerHeight, vpW=window.innerWidth;
+  const MARGIN=10;
+
+  // 竖向：鼠标在下半屏 → tooltip向上弹
+  let topPx;
+  if(e.clientY+MARGIN+tipH>vpH){
+    topPx=e.clientY-tipH-MARGIN;  // 向上
+  } else {
+    topPx=e.clientY+MARGIN;        // 向下
+  }
+
+  // 横向：鼠标靠右 → tooltip向左
+  let leftPx;
+  if(e.clientX+MARGIN+tipW>vpW){
+    leftPx=e.clientX-tipW-MARGIN; // 向左
+  } else {
+    leftPx=e.clientX+MARGIN+12;   // 向右
+  }
+
+  tip.style.top =Math.max(MARGIN,topPx)+'px';
+  tip.style.left=Math.max(MARGIN,leftPx)+'px';
 });
+
 canvas.addEventListener('mouseleave',()=>tip.style.display='none');
+
+// ── 点击跳转到明细 ──
+canvas.addEventListener('click',e=>{
+  if(sbDrag)return;
+  const rect=canvas.getBoundingClientRect();
+  const mx=e.clientX-rect.left, my=e.clientY-rect.top;
+  const W=canvas.offsetWidth, H=canvas.offsetHeight;
+  const pL=72,pR=84,pT=18,pB=28,cW=W-pL-pR;
+  if(mx<pL||mx>W-pR||my<pT||my>H-pB)return;
+
+  const {startIdx,endIdx}=getWindow();
+  const vis=prices.slice(startIdx,endIdx);
+  if(vis.length<2)return;
+
+  const t0=vis[0].ts,t1=vis[vis.length-1].ts,tSpan=t1-t0||1;
+  const near=getNearTrades(mx,t0,t1,tSpan,cW);
+  if(!near.length)return;
+
+  // 找到时间最近的那笔成交，在列表里定位
+  const targetTs=near[Math.floor(near.length/2)].ts;
+  jumpToTrade(targetTs);
+});
+
+// 跳转并高亮列表行
+function jumpToTrade(targetTs){
+  const list=document.getElementById('trList');
+  const rows=list.querySelectorAll('.tr-row');
+
+  // 清除之前高亮
+  rows.forEach(r=>r.classList.remove('jump-hl'));
+
+  // 找到 data-ts 最接近的行
+  let bestRow=null, bestDiff=Infinity;
+  rows.forEach(r=>{
+    const rTs=parseInt(r.dataset.ts||'0');
+    const diff=Math.abs(rTs-targetTs);
+    if(diff<bestDiff){bestDiff=diff;bestRow=r;}
+  });
+
+  if(bestRow){
+    bestRow.classList.add('jump-hl');
+    bestRow.scrollIntoView({block:'center',behavior:'smooth'});
+    // 1.5秒后取消高亮
+    setTimeout(()=>bestRow.classList.remove('jump-hl'),1800);
+  }
+}
 
 connect();
 </script>
