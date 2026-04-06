@@ -1,592 +1,695 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OKX 实时交易 + AI 分析</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Monaco', 'Courier New', monospace;
-            background: #0a0e27;
-            color: #ccc;
-            height: 100vh;
-            overflow: hidden;
-        }
-        
-        .container {
-            display: flex;
-            height: 100vh;
-            padding: 20px;
-            gap: 20px;
-        }
-        
-        .left-panel {
-            width: 40%;
-            display: flex;
-            flex-direction: column;
-            background: #151b3d;
-            border: 1px solid #1e2a5e;
-            border-radius: 8px;
-            overflow: hidden;
-        }
-        
-        .right-panel {
-            width: 60%;
-            display: flex;
-            flex-direction: column;
-        }
-        
-        .analysis-section {
-            display: flex;
-            flex-direction: column;
-            background: #151b3d;
-            border: 1px solid #1e2a5e;
-            border-radius: 8px;
-            overflow: hidden;
-            flex: 1;
-        }
-        
-        .header {
-            padding: 15px 20px;
-            background: #1a2142;
-            border-bottom: 1px solid #1e2a5e;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .header-left {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-        
-        .title {
-            font-size: 16px;
-            font-weight: bold;
-            color: #64b5f6;
-        }
-        
-        .pair-selector {
-            padding: 5px 10px;
-            background: #0a0e27;
-            border: 1px solid #3d5afe;
-            border-radius: 4px;
-            color: #64b5f6;
-            font-size: 13px;
-            font-family: inherit;
-            cursor: pointer;
-        }
-        
-        .pair-selector:focus {
-            outline: none;
-            border-color: #5c6bc0;
-        }
-        
-        .status {
-            font-size: 12px;
-            color: #546e7a;
-        }
-        
-        .status.connected {
-            color: #00e676;
-        }
-        
-        .table-header {
-            display: grid;
-            grid-template-columns: 1.8fr 1fr 1fr 1.2fr 0.8fr;
-            padding: 10px 20px;
-            background: #1a2142;
-            border-bottom: 2px solid #1e2a5e;
-            font-weight: bold;
-            font-size: 13px;
-            color: #64b5f6;
-            text-align: right;
-        }
-        
-        .table-header > div:first-child {
-            text-align: left;
-        }
-        
-        .trades-container {
-            flex: 1;
-            overflow-y: auto;
-            padding: 0;
-            font-size: 13px;
-        }
-        
-        .trade-row {
-            display: grid;
-            grid-template-columns: 1.8fr 1fr 1fr 1.2fr 0.8fr;
-            padding: 10px 20px;
-            border-bottom: 1px solid #1a1f3a;
-            line-height: 1.8;
-            color: #90a4ae;
-            text-align: right;
-        }
-        
-        .trade-row > div:first-child {
-            text-align: left;
-        }
-        
-        .trade-row:hover {
-            background: #1a2142;
-        }
-        
-        .side-buy {
-            color: #00e5ff;
-            font-weight: bold;
-        }
-        
-        .side-sell {
-            color: #ff6d00;
-            font-weight: bold;
-        }
-        
-        .analysis-container {
-            flex: 1;
-            overflow-y: auto;
-            padding: 15px;
-            font-size: 13px;
-            line-height: 1.8;
-            color: #b0bec5;
-        }
-        
-        .analysis-item {
-            margin-bottom: 20px;
-            padding: 15px;
-            background: #1a2142;
-            border-left: 3px solid #3d5afe;
-            border-radius: 4px;
-        }
-        
-        .analysis-time {
-            font-size: 11px;
-            color: #546e7a;
-            margin-bottom: 8px;
-        }
-        
-        .analysis-content {
-            color: #cfd8dc;
-            white-space: pre-wrap;
-        }
-        
-        .download-btn {
-            padding: 12px 20px;
-            margin: 15px 20px;
-            background: #3d5afe;
-            color: #fff;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 14px;
-        }
-        
-        .download-btn:hover {
-            background: #5c6bc0;
-        }
-        
-        .stats {
-            padding: 10px 20px;
-            background: #1a2142;
-            border-top: 1px solid #1e2a5e;
-            font-size: 12px;
-            color: #546e7a;
-        }
-        
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-        
-        ::-webkit-scrollbar-track {
-            background: #0a0e27;
-        }
-        
-        ::-webkit-scrollbar-thumb {
-            background: #1e2a5e;
-            border-radius: 4px;
-        }
-        
-        ::-webkit-scrollbar-thumb:hover {
-            background: #3d5afe;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CoinShot</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=Cormorant+Garamond:wght@500;600&display=swap');
+
+:root {
+  /* 浅米白底，参考Claude对话框 */
+  --bg:        #f9f6f0;
+  --bg2:       #f3ede3;
+  --bg3:       #ede5d8;
+  --bg4:       #e5dccb;
+  --panel:     #faf7f2;
+
+  /* 暗金色系 */
+  --gold:      #8a6a2a;
+  --gold2:     #a07c38;
+  --gold3:     #c9a55a;
+  --goldfaint: rgba(138,106,42,0.07);
+  --goldborder:rgba(138,106,42,0.18);
+  --goldborder2:rgba(138,106,42,0.28);
+
+  /* 买卖色 — 沉稳不刺眼 */
+  --buy:       #2a7a5a;
+  --sell:      #a03838;
+
+  /* 文字层级 */
+  --text:      rgba(40,28,10,0.88);
+  --text2:     rgba(80,58,20,0.55);
+  --text3:     rgba(100,75,30,0.35);
+
+  --shadow:    0 1px 4px rgba(100,75,30,0.10), 0 4px 16px rgba(100,75,30,0.06);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'IBM Plex Mono', monospace;
+  height: 100vh; overflow: hidden;
+  display: flex; flex-direction: column;
+}
+
+/* ── TOPBAR ── */
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 20px; height: 46px;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--goldborder2);
+  flex-shrink: 0;
+  box-shadow: 0 1px 6px rgba(100,75,30,0.08);
+}
+.brand {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 20px; font-weight: 600;
+  color: var(--gold); letter-spacing: 0.1em;
+}
+.brand span {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 8px; font-weight: 300;
+  color: var(--text3); letter-spacing: 0.2em;
+  margin-left: 8px; vertical-align: middle;
+}
+.controls { display:flex; align-items:center; gap:12px; }
+select {
+  background: var(--bg3); border: 1px solid var(--goldborder2);
+  color: var(--gold); font-family:'IBM Plex Mono',monospace;
+  font-size:12px; padding:4px 10px; border-radius:4px; cursor:pointer; outline:none;
+}
+select option { background:var(--bg2); color:var(--gold); }
+.live-pill {
+  display:flex; align-items:center; gap:6px;
+  padding:3px 10px; border-radius:20px;
+  border:1px solid var(--goldborder); background:var(--goldfaint);
+}
+.dot { width:6px; height:6px; border-radius:50%; background:var(--goldborder2); }
+.dot.live { background:#3aaa6a; box-shadow:0 0 5px #3aaa6a88; animation:blink 2s infinite; }
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+.live-t { font-size:10px; color:var(--text2); letter-spacing:0.1em; }
+
+/* ── MAIN ── */
+.main { display:flex; flex:1; overflow:hidden; }
+
+/* ── CHART ── */
+.chart-wrap {
+  flex:1; display:flex; flex-direction:column; overflow:hidden;
+  border-right:1px solid var(--goldborder);
+}
+.chart-toolbar {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0 14px; height:36px;
+  background: var(--bg2);
+  border-bottom:1px solid var(--goldborder); flex-shrink:0;
+}
+.toolbar-left { display:flex; align-items:center; gap:10px; }
+.toolbar-label { font-size:9px; color:var(--text3); letter-spacing:0.14em; }
+
+.zoom-group { display:flex; gap:3px; }
+.zbtn {
+  width:24px; height:24px;
+  border:1px solid var(--goldborder2);
+  background:var(--bg3); color:var(--gold);
+  font-size:13px; border-radius:4px; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  transition:background 0.12s, border-color 0.12s;
+  font-family:'IBM Plex Mono',monospace;
+}
+.zbtn:hover { background:var(--bg4); border-color:var(--gold2); }
+
+.legend { display:flex; gap:14px; align-items:center; }
+.leg { display:flex; align-items:center; gap:5px; font-size:9px; color:var(--text3); }
+.leg-dot { width:7px; height:7px; border-radius:50%; }
+
+/* chart canvas area */
+.chart-area { flex:1; position:relative; overflow:hidden; background:var(--bg); }
+canvas#chart { position:absolute; inset:0; width:100%; height:100%; cursor:crosshair; }
+
+/* scrollbar */
+.sb-wrap {
+  height:14px; background:var(--bg2);
+  border-top:1px solid var(--goldborder);
+  position:relative; cursor:pointer; user-select:none; flex-shrink:0;
+}
+.sb-thumb {
+  position:absolute; top:3px; bottom:3px;
+  background:var(--gold3); border-radius:3px; min-width:36px;
+  opacity:0.4; transition:opacity 0.15s; cursor:grab;
+}
+.sb-thumb:hover,.sb-thumb.drag { opacity:0.75; cursor:grabbing; }
+
+/* ── RIGHT PANEL ── */
+.right-panel {
+  width:300px; display:flex; flex-direction:column;
+  background:var(--panel); flex-shrink:0; overflow:hidden;
+}
+
+/* mini stats */
+.mini-stats {
+  display:grid; grid-template-columns:1fr 1fr;
+  border-bottom:1px solid var(--goldborder); flex-shrink:0;
+}
+.ms {
+  padding:8px 12px;
+  border-right:1px solid var(--goldborder);
+  border-bottom:1px solid var(--goldborder);
+  display:flex; flex-direction:column; gap:2px;
+  background:var(--bg2);
+}
+.ms:nth-child(2n){ border-right:none; }
+.ms:nth-last-child(-n+2){ border-bottom:none; }
+.ms-label { font-size:8px; color:var(--text3); letter-spacing:0.12em; }
+.ms-value { font-size:13px; font-weight:500; color:var(--gold); }
+.ms-value.buy  { color:var(--buy); }
+.ms-value.sell { color:var(--sell); }
+.ms-value.pos  { color:var(--buy); }
+.ms-value.neg  { color:var(--sell); }
+
+/* filter */
+.filter-row {
+  display:flex; align-items:center; gap:8px;
+  padding:7px 12px; border-bottom:1px solid var(--goldborder);
+  flex-shrink:0; background:var(--bg2);
+}
+.filter-label { font-size:9px; color:var(--text3); white-space:nowrap; }
+.filter-input {
+  flex:1; background:var(--bg); border:1px solid var(--goldborder2);
+  color:var(--text); font-family:'IBM Plex Mono',monospace;
+  font-size:11px; padding:3px 7px; border-radius:3px; outline:none; min-width:0;
+}
+.filter-input:focus { border-color:var(--gold2); }
+.filter-unit { font-size:9px; color:var(--text3); }
+
+/* col header */
+.col-hdr {
+  display:grid; grid-template-columns:90px 62px 68px 44px;
+  padding:4px 12px; font-size:8px; font-weight:500; color:var(--text3);
+  letter-spacing:0.1em; border-bottom:1px solid var(--goldborder);
+  background:var(--bg3); flex-shrink:0;
+}
+
+/* trades list */
+.trades-list {
+  flex:1; overflow-y:auto;
+  scrollbar-width:thin; scrollbar-color:var(--goldborder2) transparent;
+  background:var(--panel);
+}
+.trades-list::-webkit-scrollbar { width:3px; }
+.trades-list::-webkit-scrollbar-thumb { background:var(--goldborder2); border-radius:2px; }
+
+.tr-row {
+  display:grid; grid-template-columns:90px 62px 68px 44px;
+  padding:4px 12px; border-bottom:1px solid rgba(138,106,42,0.07);
+  font-size:11px; position:relative; transition:background 0.1s;
+  animation:fadein 0.15s ease;
+}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+.tr-row:hover { background:var(--bg2); }
+.tr-row.big-buy  { background:rgba(42,122,90,0.07); }
+.tr-row.big-sell { background:rgba(160,56,56,0.07); }
+.td-px   { color:var(--text); font-weight:500; }
+.td-sz   { color:var(--text2); text-align:right; }
+.td-usd  { color:var(--text2); text-align:right; }
+.td-side { text-align:right; font-weight:500; font-size:10px; }
+.td-side.buy  { color:var(--buy); }
+.td-side.sell { color:var(--sell); }
+.sz-bar { position:absolute; left:0; top:0; bottom:0; opacity:0.05; pointer-events:none; }
+
+/* tooltip */
+#tip {
+  position:fixed; background:var(--panel);
+  border:1px solid var(--goldborder2);
+  padding:9px 13px; font-size:10px; pointer-events:none; display:none;
+  z-index:999; line-height:2.1;
+  box-shadow: var(--shadow);
+  border-radius:5px; min-width:155px;
+}
+.tip-t  { font-size:8px; color:var(--text3); }
+.tip-px { font-size:14px; font-weight:600; color:var(--gold); }
+.tip-b  { color:var(--buy); }
+.tip-s  { color:var(--sell); }
+</style>
 </head>
 <body>
-    <div class="container">
-        <!-- 左侧：实时交易流 (40%) -->
-        <div class="left-panel">
-            <div class="header">
-                <div class="header-left">
-                    <div class="title">实时成交</div>
-                    <select class="pair-selector" id="pair-selector" onchange="changePair()">
-                        <option value="BTC-USDT">BTC-USDT</option>
-                        <option value="ETH-USDT">ETH-USDT</option>
-                        <option value="SOL-USDT">SOL-USDT</option>
-                        <option value="BNB-USDT">BNB-USDT</option>
-                        <option value="XRP-USDT">XRP-USDT</option>
-                        <option value="DOGE-USDT">DOGE-USDT</option>
-                        <option value="ADA-USDT">ADA-USDT</option>
-                    </select>
-                </div>
-                <div class="status" id="ws-status">连接中...</div>
-            </div>
-            <div class="table-header">
-                <div>时间 (time)</div>
-                <div>价格 (px)</div>
-                <div>数量 (sz)</div>
-                <div>金额 (price)</div>
-                <div>方向 (side)</div>
-            </div>
-            <div class="trades-container" id="trades-list"></div>
-            <div class="stats" id="stats">总计: 0 笔交易</div>
-            <button class="download-btn" onclick="downloadCSV()">下载 CSV 数据</button>
-        </div>
-        
-        <!-- 右侧 (60%) -->
-        <div class="right-panel">
-            <!-- AI分析 -->
-            <div class="analysis-section">
-                <div class="header">
-                    <div class="title">AI 实时分析 (Groq)</div>
-                    <div class="status" id="ai-status">等待数据...</div>
-                </div>
-                <div class="analysis-container" id="analysis-list"></div>
-            </div>
-        </div>
+
+<div class="topbar">
+  <div class="brand">CoinShot<span>FLOW ANALYSIS</span></div>
+  <div class="controls">
+    <select id="pairSel" onchange="changePair()">
+      <option value="BTC-USDT">BTC-USDT</option>
+      <option value="ETH-USDT">ETH-USDT</option>
+      <option value="SOL-USDT">SOL-USDT</option>
+      <option value="BNB-USDT">BNB-USDT</option>
+      <option value="XRP-USDT">XRP-USDT</option>
+      <option value="DOGE-USDT">DOGE-USDT</option>
+    </select>
+    <div class="live-pill">
+      <div class="dot" id="dot"></div>
+      <div class="live-t" id="liveT">连接中</div>
     </div>
+  </div>
+</div>
 
-    <script>
-        // ===== 配置 =====
-        const GROQ_API_KEY = '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';
-        let INST_ID = 'BTC-USDT';
-        const WS_URL = 'wss://ws.okx.com:8443/ws/v5/public';
-        const TIMEZONE = 'Europe/London';
-        
-        // ===== 全局数据 =====
-        let allTrades = [];
-        let recentTrades = [];
-        let seenIds = new Set();
-        let ws = null;
-        let analysisInterval = null;
-        let autoScroll = true;
-        
-        // ===== 时间格式化 =====
-        function formatTime(tsMs) {
-            const date = new Date(parseInt(tsMs));
-            const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const day = String(date.getDate()).padStart(2, '0');
-            const hours = String(date.getHours()).padStart(2, '0');
-            const minutes = String(date.getMinutes()).padStart(2, '0');
-            const seconds = String(date.getSeconds()).padStart(2, '0');
-            const ms = String(date.getMilliseconds()).padStart(3, '0');
-            return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}.${ms}`;
-        }
-        
-        // ===== 切换交易对 =====
-        function changePair() {
-            const selector = document.getElementById('pair-selector');
-            INST_ID = selector.value;
-            
-            allTrades = [];
-            recentTrades = [];
-            seenIds.clear();
-            document.getElementById('trades-list').innerHTML = '';
-            document.getElementById('analysis-list').innerHTML = '';
-            updateStats();
-            
-            if (ws) {
-                ws.close();
-            }
-            setTimeout(() => connectOKX(), 500);
-        }
-        
-        // ===== 监听滚动事件 =====
-        function setupScrollListener() {
-            const container = document.getElementById('trades-list');
-            
-            container.addEventListener('scroll', () => {
-                const isAtBottom = container.scrollHeight - container.scrollTop <= container.clientHeight + 10;
-                autoScroll = isAtBottom;
-            });
-        }
-        
-        // ===== 连接 OKX WebSocket =====
-        function connectOKX() {
-            ws = new WebSocket(WS_URL);
-            
-            ws.onopen = () => {
-                console.log('WebSocket 已连接');
-                document.getElementById('ws-status').textContent = '已连接';
-                document.getElementById('ws-status').classList.add('connected');
-                
-                const subMsg = {
-                    op: 'subscribe',
-                    args: [{ channel: 'trades', instId: INST_ID }]
-                };
-                ws.send(JSON.stringify(subMsg));
-            };
-            
-            ws.onmessage = (event) => {
-                try {
-                    const data = JSON.parse(event.data);
-                    
-                    if (data.event) {
-                        console.log('事件:', data.event, data.msg || '');
-                        return;
-                    }
-                    
-                    if (data.data && Array.isArray(data.data)) {
-                        data.data.forEach(trade => {
-                            processTrade(trade);
-                        });
-                    }
-                } catch (err) {
-                    console.error('解析消息错误:', err);
-                }
-            };
-            
-            ws.onerror = (error) => {
-                console.error('WebSocket 错误:', error);
-                document.getElementById('ws-status').textContent = '连接错误';
-                document.getElementById('ws-status').classList.remove('connected');
-            };
-            
-            ws.onclose = () => {
-                console.log('WebSocket 已断开，5秒后重连...');
-                document.getElementById('ws-status').textContent = '已断开';
-                document.getElementById('ws-status').classList.remove('connected');
-                setTimeout(connectOKX, 5000);
-            };
-        }
-        
-        // ===== 处理单笔交易 =====
-        function processTrade(trade) {
-            const tradeId = trade.tradeId;
-            
-            if (seenIds.has(tradeId)) return;
-            seenIds.add(tradeId);
-            
-            if (seenIds.size > 200000) {
-                seenIds.clear();
-            }
-            
-            const ts = parseInt(trade.ts);
-            const px = parseFloat(trade.px);
-            const sz = parseFloat(trade.sz);
-            const price = (px * sz).toFixed(2);
-            const side = trade.side;
-            const timeStr = formatTime(ts);
-            
-            const tradeData = {
-                time: timeStr,
-                px: trade.px,
-                sz: trade.sz,
-                price: price,
-                side: side,
-                ts: ts
-            };
-            
-            allTrades.push(tradeData);
-            recentTrades.push(tradeData);
-            
-            displayTrade(tradeData);
-            updateStats();
-        }
-        
-        // ===== 显示交易 =====
-        function displayTrade(trade) {
-            const container = document.getElementById('trades-list');
-            const row = document.createElement('div');
-            row.className = 'trade-row';
-            
-            const sideClass = trade.side === 'buy' ? 'side-buy' : 'side-sell';
-            row.innerHTML = `
-                <div>${trade.time}</div>
-                <div>${trade.px}</div>
-                <div>${trade.sz}</div>
-                <div>${trade.price}</div>
-                <div class="${sideClass}">${trade.side}</div>
-            `;
-            
-            container.appendChild(row);
-            
-            if (autoScroll) {
-                container.scrollTop = container.scrollHeight;
-            }
-        }
-        
-        // ===== 更新统计 =====
-        function updateStats() {
-            document.getElementById('stats').textContent = `总计: ${allTrades.length} 笔交易`;
-        }
-        
-        // ===== AI 分析 (使用 Groq) =====
-        async function analyzeWithGroq() {
-            if (recentTrades.length === 0) {
-                return;
-            }
-            
-            document.getElementById('ai-status').textContent = '分析中...';
-            
-            const summary = prepareSummary(recentTrades);
-            
-            try {
-                const url = 'https://api.groq.com/openai/v1/chat/completions';
-                
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${GROQ_API_KEY}`
-                    },
-                    body: JSON.stringify({
-                        model: 'llama-3.3-70b-versatile',
-                        messages: [{
-                            role: 'user',
-                            content: `你是一名专业的加密货币交易分析师。
+<div class="main">
 
-我正在监控 ${INST_ID} 交易对的实时市场数据。${INST_ID} 是比特币(BTC)对美元稳定币(USDT)的交易对，价格单位为USDT。
+  <div class="chart-wrap">
+    <div class="chart-toolbar">
+      <div class="toolbar-left">
+        <div class="toolbar-label">价格 · 成交</div>
+        <div class="zoom-group">
+          <div class="zbtn" id="zIn"  title="放大">+</div>
+          <div class="zbtn" id="zOut" title="缩小">−</div>
+          <div class="zbtn" id="zFit" title="全部" style="font-size:9px;letter-spacing:0">ALL</div>
+        </div>
+      </div>
+      <div class="legend">
+        <div class="leg"><div class="leg-dot" style="background:var(--buy)"></div><span>买入</span></div>
+        <div class="leg"><div class="leg-dot" style="background:var(--sell)"></div><span>卖出</span></div>
+        <div class="leg">
+          <div style="width:18px;height:1.5px;background:var(--gold);margin-right:4px;opacity:0.7;border-radius:1px"></div>
+          <span>价格</span>
+        </div>
+        <div class="leg">◆ 大单</div>
+      </div>
+    </div>
+    <div class="chart-area">
+      <canvas id="chart"></canvas>
+    </div>
+    <div class="sb-wrap" id="sbWrap">
+      <div class="sb-thumb" id="sbThumb"></div>
+    </div>
+  </div>
 
-以下是过去20秒内的真实交易统计数据：
+  <div class="right-panel">
+    <div class="mini-stats">
+      <div class="ms"><div class="ms-label">当前价格</div><div class="ms-value" id="s-price">—</div></div>
+      <div class="ms"><div class="ms-label">CVD</div><div class="ms-value" id="s-cvd">—</div></div>
+      <div class="ms"><div class="ms-label">买入量</div><div class="ms-value buy" id="s-buy">—</div></div>
+      <div class="ms"><div class="ms-label">卖出量</div><div class="ms-value sell" id="s-sell">—</div></div>
+      <div class="ms" style="grid-column:span 2;border-bottom:none;">
+        <div class="ms-label">买方占比</div>
+        <div class="ms-value" id="s-ratio">—</div>
+      </div>
+    </div>
+    <div class="filter-row">
+      <div class="filter-label">大单高亮 ≥</div>
+      <input class="filter-input" id="threshInput" type="number" placeholder="金额" min="0">
+      <div class="filter-unit">USDT</div>
+    </div>
+    <div class="col-hdr">
+      <div>价格(USDT)</div>
+      <div style="text-align:right">数量</div>
+      <div style="text-align:right">金额(U)</div>
+      <div style="text-align:right">方向</div>
+    </div>
+    <div class="trades-list" id="trList"></div>
+  </div>
+</div>
 
-${summary}
+<div id="tip"></div>
 
-数据说明：
-- 交易笔数：过去20秒发生的成交次数
-- 买单：主动买入的交易（买方吃单），数量越多表示买入意愿强
-- 卖单：主动卖出的交易（卖方吃单），数量越多表示卖出压力大
-- 币：指BTC的数量
-- 价格范围：20秒内的最低价和最高价
-- 平均价格：20秒内的成交均价
+<script>
+let PAIR = 'BTC-USDT';
+const WS_URL  = 'wss://ws.okx.com:8443/ws/v5/public';
+const MAX_SHOW = 300;
+let VIEW_COUNT = 300;
+const VIEW_MIN = 60, VIEW_MAX = 5000;
 
-请基于这些真实交易数据，用简洁专业的语言分析（不超过120字）：
-1. 买卖压力对比情况
-2. 短期价格趋势判断
-3. 是否有异常大额交易`
-                        }],
-                        temperature: 0.7,
-                        max_tokens: 300
-                    })
-                });
-                
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    console.error('API错误:', response.status, errorText);
-                    throw new Error(`API返回错误: ${response.status}`);
-                }
-                
-                const data = await response.json();
-                const analysis = data.choices?.[0]?.message?.content || '分析数据为空';
-                
-                displayAnalysis(analysis);
-                document.getElementById('ai-status').textContent = '最后分析: ' + new Date().toLocaleTimeString();
-                
-            } catch (err) {
-                console.error('AI分析错误:', err);
-                displayAnalysis(`分析失败: ${err.message}`);
-                document.getElementById('ai-status').textContent = '分析失败';
-            }
-            
-            recentTrades = [];
-        }
-        
-        // ===== 准备数据摘要 =====
-        function prepareSummary(trades) {
-            let buyCount = 0, sellCount = 0;
-            let buyVolume = 0, sellVolume = 0;
-            let prices = [];
-            
-            trades.forEach(t => {
-                const vol = parseFloat(t.sz);
-                prices.push(parseFloat(t.px));
-                
-                if (t.side === 'buy') {
-                    buyCount++;
-                    buyVolume += vol;
-                } else {
-                    sellCount++;
-                    sellVolume += vol;
-                }
-            });
-            
-            const avgPrice = (prices.reduce((a,b) => a+b, 0) / prices.length).toFixed(2);
-            const minPrice = Math.min(...prices).toFixed(2);
-            const maxPrice = Math.max(...prices).toFixed(2);
-            
-            return `交易笔数: ${trades.length}
-买单: ${buyCount}笔 (${buyVolume.toFixed(4)} 币)
-卖单: ${sellCount}笔 (${sellVolume.toFixed(4)} 币)
-价格范围: ${minPrice} - ${maxPrice} USDT
-平均价格: ${avgPrice} USDT`;
-        }
-        
-        // ===== 显示分析结果 =====
-        function displayAnalysis(text) {
-            const container = document.getElementById('analysis-list');
-            const item = document.createElement('div');
-            item.className = 'analysis-item';
-            
-            const timeStr = new Date().toLocaleString('zh-CN', { 
-                hour12: false,
-                timeZone: TIMEZONE 
-            });
-            
-            item.innerHTML = `
-                <div class="analysis-time">${timeStr}</div>
-                <div class="analysis-content">${text}</div>
-            `;
-            
-            container.insertBefore(item, container.firstChild);
-        }
-        
-        // ===== 下载 CSV =====
-        function downloadCSV() {
-            if (allTrades.length === 0) {
-                alert('暂无数据');
-                return;
-            }
-            
-            let csv = 'time,px,sz,price,side\n';
-            allTrades.forEach(t => {
-                csv += `${t.time},${t.px},${t.sz},${t.price},${t.side}\n`;
-            });
-            
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            const url = URL.createObjectURL(blob);
-            
-            const filename = `okx_${INST_ID.replace('-', '_')}_${new Date().getTime()}.csv`;
-            link.setAttribute('href', url);
-            link.setAttribute('download', filename);
-            link.style.visibility = 'hidden';
-            
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-        
-        // ===== 启动 =====
-        window.onload = () => {
-            connectOKX();
-            setupScrollListener();
-            
-            analysisInterval = setInterval(analyzeWithGroq, 20000);
-        };
-        
-        // ===== 清理 =====
-        window.onbeforeunload = () => {
-            if (ws) ws.close();
-            if (analysisInterval) clearInterval(analysisInterval);
-        };
-    </script>
+let ws=null, seenIds=new Set();
+let prices=[], trades=[];
+let totalBuy=0, totalSell=0, cvd=0, cnt=0;
+let bigThresh=0, maxUsdSeen=0;
+let scrollPct=1.0, liveMode=true;
+
+// ── CANVAS ──
+const canvas=document.getElementById('chart');
+const ctx=canvas.getContext('2d');
+let DPR=window.devicePixelRatio||1;
+
+function resize(){
+  DPR=window.devicePixelRatio||1;
+  const w=canvas.offsetWidth, h=canvas.offsetHeight;
+  canvas.width=w*DPR; canvas.height=h*DPR;
+  ctx.setTransform(1,0,0,1,0,0);
+  ctx.scale(DPR,DPR);
+  draw();
+}
+window.addEventListener('resize', resize);
+setTimeout(resize, 80);
+
+// ── WS ──
+function connect(){
+  ws=new WebSocket(WS_URL);
+  ws.onopen=()=>{
+    setLive(true);
+    ws.send(JSON.stringify({op:'subscribe',args:[{channel:'trades',instId:PAIR}]}));
+  };
+  ws.onmessage=e=>{
+    try{const j=JSON.parse(e.data); if(!j.event&&j.data) j.data.forEach(processTrade);}catch(_){}
+  };
+  ws.onclose=()=>{setLive(false);setTimeout(connect,3000);};
+  ws.onerror=()=>setLive(false);
+}
+function setLive(on){
+  document.getElementById('dot').className='dot'+(on?' live':'');
+  document.getElementById('liveT').textContent=on?'LIVE':'重连中';
+}
+function changePair(){
+  PAIR=document.getElementById('pairSel').value;
+  prices=[];trades=[];totalBuy=totalSell=cvd=cnt=maxUsdSeen=0;
+  scrollPct=1;liveMode=true;
+  document.getElementById('trList').innerHTML='';
+  updateStats(); if(ws)ws.close(); setTimeout(connect,300);
+}
+
+// ── PROCESS ──
+function processTrade(t){
+  if(seenIds.has(t.tradeId))return;
+  seenIds.add(t.tradeId);
+  if(seenIds.size>200000)seenIds.clear();
+
+  const px=parseFloat(t.px), sz=parseFloat(t.sz), usd=px*sz;
+  const ts=parseInt(t.ts), side=t.side;
+
+  prices.push({ts,px});
+  trades.push({ts,px,sz,usd,side});
+  maxUsdSeen=Math.max(maxUsdSeen,usd);
+
+  if(side==='buy'){totalBuy+=sz;cvd+=sz;}else{totalSell+=sz;cvd-=sz;}
+  cnt++;
+
+  if(liveMode) scrollPct=1;
+  updateStats(px);
+  prependRow({ts,px,sz,usd,side});
+  updateSB();
+  draw();
+}
+
+// ── FORMAT ──
+function fmtPx(px){
+  if(px>=10000) return px.toLocaleString('en',{maximumFractionDigits:1});
+  if(px>=100)   return px.toFixed(2);
+  if(px>=1)     return px.toFixed(4);
+  return px.toFixed(6);
+}
+function fmtVol(v){
+  if(v>=1e6)return(v/1e6).toFixed(2)+'M';
+  if(v>=1e3)return(v/1e3).toFixed(2)+'K';
+  return v.toFixed(3);
+}
+function fmtUSD(u){
+  if(u>=1e6)return(u/1e6).toFixed(2)+'M';
+  if(u>=1e3)return(u/1e3).toFixed(1)+'K';
+  return u.toFixed(0);
+}
+
+// ── STATS ──
+function updateStats(px){
+  if(px!==undefined) document.getElementById('s-price').textContent=fmtPx(px)+' U';
+  document.getElementById('s-buy').textContent=fmtVol(totalBuy);
+  document.getElementById('s-sell').textContent=fmtVol(totalSell);
+  const cvdEl=document.getElementById('s-cvd');
+  cvdEl.textContent=(cvd>=0?'+':'')+fmtVol(cvd);
+  cvdEl.className='ms-value '+(cvd>=0?'pos':'neg');
+  const tot=totalBuy+totalSell;
+  const r=tot>0?(totalBuy/tot*100):50;
+  const rEl=document.getElementById('s-ratio');
+  rEl.textContent=r.toFixed(1)+'%';
+  rEl.className='ms-value '+(r>=50?'pos':'neg');
+}
+
+// ── TRADE LIST ──
+function makeRow(t){
+  const isBig=bigThresh>0&&t.usd>=bigThresh;
+  const row=document.createElement('div');
+  row.className='tr-row'+(isBig?(t.side==='buy'?' big-buy':' big-sell'):'');
+  const barPct=maxUsdSeen>0?(t.usd/maxUsdSeen*100):0;
+  const barCol=t.side==='buy'?'#2a7a5a':'#a03838';
+  const bigMark=isBig?' ◆':'';
+  const szStr=t.sz>=1?t.sz.toFixed(3):t.sz.toFixed(5);
+  row.innerHTML=`
+    <div class="sz-bar" style="width:${barPct}%;background:${barCol}"></div>
+    <div class="td-px">${fmtPx(t.px)}</div>
+    <div class="td-sz">${szStr}</div>
+    <div class="td-usd">${fmtUSD(t.usd)}${bigMark}</div>
+    <div class="td-side ${t.side}">${t.side==='buy'?'买':'卖'}</div>
+  `;
+  return row;
+}
+function prependRow(t){
+  const list=document.getElementById('trList');
+  if(list.children.length>=MAX_SHOW) list.removeChild(list.lastChild);
+  list.insertBefore(makeRow(t),list.firstChild);
+}
+function rebuildList(){
+  const list=document.getElementById('trList');
+  list.innerHTML='';
+  trades.slice(-MAX_SHOW).reverse().forEach(t=>list.appendChild(makeRow(t)));
+}
+document.getElementById('threshInput').addEventListener('input',e=>{
+  bigThresh=parseFloat(e.target.value)||0;
+  draw(); rebuildList();
+});
+
+// ── VIEW WINDOW ──
+function getWindow(){
+  const vc=Math.min(prices.length, VIEW_COUNT);
+  const maxStart=Math.max(0, prices.length-vc);
+  const startIdx=Math.round(scrollPct*maxStart);
+  const endIdx=Math.min(startIdx+vc, prices.length);
+  return {startIdx, endIdx};
+}
+
+// ── SCROLLBAR ──
+function updateSB(){
+  if(prices.length<2)return;
+  const wrap=document.getElementById('sbWrap');
+  const thumb=document.getElementById('sbThumb');
+  const W=wrap.offsetWidth;
+  const vc=Math.min(prices.length,VIEW_COUNT);
+  const thumbW=Math.max(36,(vc/prices.length)*W);
+  thumb.style.width=thumbW+'px';
+  thumb.style.left=(scrollPct*(W-thumbW))+'px';
+}
+let sbDrag=false, sbDragX=0, sbDragPct=0;
+const sbThumb=document.getElementById('sbThumb');
+sbThumb.addEventListener('mousedown',e=>{
+  sbDrag=true;sbDragX=e.clientX;sbDragPct=scrollPct;
+  sbThumb.classList.add('drag');e.preventDefault();
+});
+document.addEventListener('mousemove',e=>{
+  if(!sbDrag)return;
+  const wrap=document.getElementById('sbWrap');
+  const W=wrap.offsetWidth,tW=sbThumb.offsetWidth;
+  const range=W-tW; if(range<=0)return;
+  scrollPct=Math.max(0,Math.min(1,sbDragPct+(e.clientX-sbDragX)/range));
+  liveMode=scrollPct>=0.99;
+  updateSB(); draw();
+});
+document.addEventListener('mouseup',()=>{sbDrag=false;sbThumb.classList.remove('drag');});
+document.getElementById('sbWrap').addEventListener('click',e=>{
+  if(e.target===sbThumb)return;
+  const wrap=document.getElementById('sbWrap');
+  const rect=wrap.getBoundingClientRect();
+  const tW=sbThumb.offsetWidth;
+  scrollPct=Math.max(0,Math.min(1,(e.clientX-rect.left-tW/2)/(wrap.offsetWidth-tW)));
+  liveMode=scrollPct>=0.99;
+  updateSB(); draw();
+});
+canvas.addEventListener('wheel',e=>{
+  e.preventDefault();
+  scrollPct=Math.max(0,Math.min(1,scrollPct+(e.deltaY>0?0.05:-0.05)));
+  liveMode=scrollPct>=0.99;
+  updateSB(); draw();
+},{passive:false});
+
+// ── ZOOM ──
+document.getElementById('zIn').addEventListener('click',()=>{
+  VIEW_COUNT=Math.max(VIEW_MIN,Math.round(VIEW_COUNT*0.6));
+  updateSB(); draw();
+});
+document.getElementById('zOut').addEventListener('click',()=>{
+  VIEW_COUNT=Math.min(VIEW_MAX,Math.round(VIEW_COUNT*1.6));
+  updateSB(); draw();
+});
+document.getElementById('zFit').addEventListener('click',()=>{
+  VIEW_COUNT=prices.length||300;
+  scrollPct=0.5; liveMode=false;
+  updateSB(); draw();
+});
+
+// ── DRAW ──
+function draw(){
+  const W=canvas.offsetWidth, H=canvas.offsetHeight;
+  if(!W||!H)return;
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='#f9f6f0'; ctx.fillRect(0,0,W,H);
+
+  if(prices.length<2){
+    ctx.fillStyle='rgba(138,106,42,0.35)';
+    ctx.font='12px IBM Plex Mono'; ctx.textAlign='center';
+    ctx.fillText('等待成交数据 ...',W/2,H/2);
+    return;
+  }
+
+  const {startIdx,endIdx}=getWindow();
+  const vis=prices.slice(startIdx,endIdx);
+  if(vis.length<2)return;
+
+  const t0=vis[0].ts, t1=vis[vis.length-1].ts;
+  const tSpan=t1-t0||1;
+
+  // 价格范围（包含所有在时间窗口内的交易点，防止超出边界）
+  const pxArr=vis.map(p=>p.px);
+  const trInWin=trades.filter(tr=>tr.ts>=t0&&tr.ts<=t1);
+  const allPx=[...pxArr,...trInWin.map(tr=>tr.px)];
+  let mn=Math.min(...allPx), mx=Math.max(...allPx);
+  const rng=mx-mn||mn*0.001;
+  // 上下各留 15% padding，确保所有点都在框内
+  mn -= rng*0.15;
+  mx += rng*0.15;
+
+  const pL=72, pR=84, pT=18, pB=28;
+  const cW=W-pL-pR, cH=H-pT-pB;
+
+  function X(ts){ return pL+((ts-t0)/tSpan)*cW; }
+  function Y(px){ return pT+(1-(px-mn)/(mx-mn))*cH; }
+  function Xi(i){ return X(vis[i].ts); }
+
+  // ── 水平 grid ──
+  for(let i=0;i<=5;i++){
+    const y=pT+(i/5)*cH;
+    const pLabel=mx-(i/5)*(mx-mn);
+    ctx.strokeStyle='rgba(138,106,42,0.09)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(pL,y); ctx.lineTo(W-pR,y); ctx.stroke();
+    ctx.fillStyle='rgba(100,75,30,0.40)';
+    ctx.font='9px IBM Plex Mono'; ctx.textAlign='right';
+    ctx.fillText(fmtPx(pLabel),pL-5,y+3.5);
+  }
+  // 竖向 grid / 时间轴
+  const tickN=5;
+  for(let i=0;i<=tickN;i++){
+    const ts=t0+(i/tickN)*tSpan;
+    const x=X(ts);
+    ctx.strokeStyle='rgba(138,106,42,0.07)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(x,pT); ctx.lineTo(x,pT+cH); ctx.stroke();
+    const d=new Date(ts);
+    const lbl=d.getHours().toString().padStart(2,'0')+':'+
+              d.getMinutes().toString().padStart(2,'0')+':'+
+              d.getSeconds().toString().padStart(2,'0');
+    ctx.fillStyle='rgba(100,75,30,0.32)';
+    ctx.font='8px IBM Plex Mono'; ctx.textAlign='center';
+    ctx.fillText(lbl,x,H-8);
+  }
+
+  // ── 价格区域填充 ──
+  const grad=ctx.createLinearGradient(0,pT,0,pT+cH);
+  grad.addColorStop(0,'rgba(138,106,42,0.10)');
+  grad.addColorStop(1,'rgba(138,106,42,0.01)');
+  ctx.beginPath();
+  ctx.moveTo(Xi(0),Y(vis[0].px));
+  for(let i=1;i<vis.length;i++) ctx.lineTo(Xi(i),Y(vis[i].px));
+  ctx.lineTo(Xi(vis.length-1),pT+cH);
+  ctx.lineTo(Xi(0),pT+cH);
+  ctx.closePath();
+  ctx.fillStyle=grad; ctx.fill();
+
+  // ── 价格线 ──
+  ctx.beginPath(); ctx.strokeStyle='rgba(138,106,42,0.70)';
+  ctx.lineWidth=1.5; ctx.lineJoin='round';
+  for(let i=0;i<vis.length;i++){
+    i===0?ctx.moveTo(Xi(i),Y(vis[i].px)):ctx.lineTo(Xi(i),Y(vis[i].px));
+  }
+  ctx.stroke();
+
+  // ── 交易点（时间戳精确对齐，Y坐标不裁切） ──
+  trInWin.forEach(tr=>{
+    const x=X(tr.ts);
+    // Y 坐标直接用 tr.px，已在扩展后的 mn/mx 范围内
+    const y=Y(tr.px);
+    const isBig=bigThresh>0&&tr.usd>=bigThresh;
+    const r=isBig?5.5:2.5;
+    const color=tr.side==='buy'?'#2a7a5a':'#a03838';
+
+    if(isBig){
+      ctx.beginPath(); ctx.arc(x,y,r+5,0,Math.PI*2);
+      ctx.strokeStyle=tr.side==='buy'?'rgba(42,122,90,0.18)':'rgba(160,56,56,0.18)';
+      ctx.lineWidth=2; ctx.stroke();
+    }
+    ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2);
+    ctx.fillStyle=color; ctx.fill();
+    if(isBig){
+      ctx.beginPath(); ctx.arc(x,y,r-2,0,Math.PI*2);
+      ctx.fillStyle='rgba(249,246,240,0.5)'; ctx.fill();
+    }
+  });
+
+  // ── 当前价格 badge ──
+  const lastPx=vis[vis.length-1].px;
+  const lastY=Y(lastPx);
+  ctx.strokeStyle='rgba(138,106,42,0.22)'; ctx.setLineDash([4,4]); ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(pL,lastY); ctx.lineTo(W-pR+2,lastY); ctx.stroke();
+  ctx.setLineDash([]);
+  const bW=80,bH=18;
+  ctx.fillStyle='rgba(138,106,42,0.80)';
+  ctx.beginPath(); ctx.roundRect(W-pR+4,lastY-bH/2,bW,bH,3); ctx.fill();
+  ctx.fillStyle='#faf7f2';
+  ctx.font='bold 10px IBM Plex Mono'; ctx.textAlign='center';
+  ctx.fillText(fmtPx(lastPx),W-pR+4+bW/2,lastY+3.5);
+
+  // 信息标签
+  if(!liveMode&&scrollPct<0.98){
+    const lag=prices.length-endIdx;
+    ctx.fillStyle='rgba(138,106,42,0.38)';
+    ctx.font='8px IBM Plex Mono'; ctx.textAlign='left';
+    ctx.fillText('◄ 历史  (−'+lag+' 条)',pL+8,pT+13);
+  }
+  ctx.fillStyle='rgba(100,75,30,0.22)';
+  ctx.font='8px IBM Plex Mono'; ctx.textAlign='right';
+  ctx.fillText('共 '+prices.length+' · 显示 '+vis.length, W-pR-4, pT+13);
+}
+
+// ── TOOLTIP ──
+const tip=document.getElementById('tip');
+canvas.addEventListener('mousemove',e=>{
+  if(sbDrag){tip.style.display='none';return;}
+  const rect=canvas.getBoundingClientRect();
+  const mx=e.clientX-rect.left, my=e.clientY-rect.top;
+  const W=canvas.offsetWidth, H=canvas.offsetHeight;
+  const pL=72,pR=84,pT=18,pB=28,cW=W-pL-pR;
+  if(mx<pL||mx>W-pR||my<pT||my>H-pB){tip.style.display='none';return;}
+
+  const {startIdx,endIdx}=getWindow();
+  const vis=prices.slice(startIdx,endIdx);
+  if(vis.length<2){tip.style.display='none';return;}
+
+  const t0=vis[0].ts,t1=vis[vis.length-1].ts,tSpan=t1-t0||1;
+  const hovTs=t0+((mx-pL)/cW)*tSpan;
+
+  let best=-1,bestD=Infinity;
+  for(let i=0;i<vis.length;i++){
+    const d=Math.abs(vis[i].ts-hovTs);
+    if(d<bestD){bestD=d;best=i;}
+  }
+  const pt=vis[best]; if(!pt){tip.style.display='none';return;}
+
+  const tol=tSpan*0.03;
+  const near=trades.filter(tr=>tr.ts>=t0&&tr.ts<=t1&&Math.abs(tr.ts-hovTs)<tol);
+
+  const d=new Date(pt.ts);
+  const ts=d.getHours().toString().padStart(2,'0')+':'+
+            d.getMinutes().toString().padStart(2,'0')+':'+
+            d.getSeconds().toString().padStart(2,'0')+'.'+
+            d.getMilliseconds().toString().padStart(3,'0');
+
+  let html=`<div class="tip-t">${ts}</div><div class="tip-px">${fmtPx(pt.px)} USDT</div>`;
+  if(near.length){
+    html+='<div style="height:3px"></div>';
+    near.slice(0,5).forEach(tr=>{
+      const cls=tr.side==='buy'?'tip-b':'tip-s';
+      html+=`<div class="${cls}">${tr.side==='buy'?'买入':'卖出'} ${tr.sz.toFixed(4)} · ${fmtUSD(tr.usd)} U</div>`;
+    });
+  }
+  tip.innerHTML=html; tip.style.display='block';
+  tip.style.left=(e.clientX+16)+'px'; tip.style.top=(e.clientY-12)+'px';
+});
+canvas.addEventListener('mouseleave',()=>tip.style.display='none');
+
+connect();
+</script>
 </body>
 </html>
